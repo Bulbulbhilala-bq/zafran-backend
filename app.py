@@ -1,27 +1,23 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import os
 from dotenv import load_dotenv
+import sendgrid
+from sendgrid.helpers.mail import Mail
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-GMAIL_USER     = os.getenv("GMAIL_USER")    
-GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")  
-RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL") 
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+SENDER_EMAIL     = os.getenv("SENDER_EMAIL")
+RECEIVER_EMAIL   = os.getenv("RECEIVER_EMAIL")
 
 
 def send_email(name, email, phone, message):
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"New Client Inquiry from {name} — Zafran Site"
-    msg["From"]    = GMAIL_USER
-    msg["To"]      = RECEIVER_EMAIL
-
+    sg = sendgrid.SendGridAPIClient(api_key=SENDGRID_API_KEY)
+    
     html = f"""
     <html>
     <body style="font-family: Arial, sans-serif; background:#f9f9f9; padding:30px;">
@@ -44,12 +40,14 @@ def send_email(name, email, phone, message):
     </body>
     </html>
     """
-
-    msg.attach(MIMEText(html, "html"))
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(GMAIL_USER, GMAIL_PASSWORD)
-        server.sendmail(GMAIL_USER, RECEIVER_EMAIL, msg.as_string())
+    
+    mail = Mail(
+        from_email=SENDER_EMAIL,
+        to_emails=RECEIVER_EMAIL,
+        subject=f"New Client Inquiry from {name} — Zafran Site",
+        html_content=html
+    )
+    sg.send(mail)
 
 
 @app.route("/contact", methods=["POST"])
@@ -69,7 +67,7 @@ def contact():
         return jsonify({"success": True, "message": "Message bhej diya gaya!"})
     except Exception as e:
         print("Email error:", e)
-        return jsonify({"success": False, "error": "Email send nahi hui. Config check karo."}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/", methods=["GET"])
