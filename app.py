@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, origins=["https://zafran-frontend.netlify.app"])
+CORS(app, resources={r"/contact": {"origins": "https://zafran-frontend.netlify.app"}})
 
 GMAIL_USER     = os.getenv("GMAIL_USER")    
 GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")  
