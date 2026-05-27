@@ -8,6 +8,7 @@ from sendgrid.helpers.mail import Mail
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 SENDER_EMAIL     = os.getenv("SENDER_EMAIL")
